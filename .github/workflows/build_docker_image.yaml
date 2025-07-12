@@ -23,6 +23,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/build-push-action@v6
         with:
-          platforms: linux/arm/v8
+          platforms: linux/arm64
           push: true
-          tags: ghcr.io/Nkyoku/jetson_container:latest
+          tags: ghcr.io/nkyoku/jetson_container:latest
