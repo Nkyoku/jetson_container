@@ -102,6 +102,14 @@ RUN apt update && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
 
+# https://askubuntu.com/questions/1513927/ubuntu-24-04-docker-images-now-includes-user-ubuntu-with-uid-gid-1000
+RUN if getent passwd $UID; then \
+      userdel -f $(getent passwd $UID | cut -d: -f1); \
+    fi \
+    && if getent group $GID; then \
+      groupdel $(getent group $GID | cut -d: -f1); \
+    fi
+
 # Create user
 RUN useradd -m $USER && \
     echo "$USER:$USER" | chpasswd && \
