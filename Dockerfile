@@ -5,12 +5,35 @@ FROM docker.io/arm64v8/ubuntu:24.04
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 
+ARG DEBIAN_FRONTEND=noninteractive
 ARG UID=1000
 ARG GID=1000
 ENV USER=jetson
 ENV HOME=/home/$USER
 
-ARG DEBIAN_FRONTEND=noninteractive
+# Delete existing user
+# https://askubuntu.com/questions/1513927/ubuntu-24-04-docker-images-now-includes-user-ubuntu-with-uid-gid-1000
+RUN if getent passwd $UID; then \
+      userdel -f $(getent passwd $UID | cut -d: -f1); \
+    fi \
+    && if getent group $GID; then \
+      groupdel $(getent group $GID | cut -d: -f1); \
+    fi
+
+# Create user
+RUN useradd -m $USER && \
+    echo "$USER:$USER" | chpasswd && \
+    usermod --shell /bin/bash $USER && \
+    usermod -aG sudo $USER && \
+    echo "$USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER && \
+    chmod 0440 /etc/sudoers.d/$USER && \
+    usermod --uid $UID $USER && \
+    groupmod --gid $GID $USER
+RUN usermod -aG video $USER
+USER $USER
+WORKDIR $HOME
+SHELL ["/bin/bash", "-l", "-c"]
+
 RUN apt update && \
     apt install -qq -y --no-install-recommends \
         bash-completion \
@@ -116,29 +139,6 @@ RUN apt update && \
         && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
-
-# Delete existing user
-# https://askubuntu.com/questions/1513927/ubuntu-24-04-docker-images-now-includes-user-ubuntu-with-uid-gid-1000
-RUN if getent passwd $UID; then \
-      userdel -f $(getent passwd $UID | cut -d: -f1); \
-    fi \
-    && if getent group $GID; then \
-      groupdel $(getent group $GID | cut -d: -f1); \
-    fi
-
-# Create user
-RUN useradd -m $USER && \
-    echo "$USER:$USER" | chpasswd && \
-    usermod --shell /bin/bash $USER && \
-    usermod -aG sudo $USER && \
-    echo "$USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER && \
-    chmod 0440 /etc/sudoers.d/$USER && \
-    usermod --uid $UID $USER && \
-    groupmod --gid $GID $USER
-RUN usermod -aG video $USER
-USER $USER
-WORKDIR $HOME
-SHELL ["/bin/bash", "-l", "-c"]
 
 RUN echo "export PATH=/usr/local/cuda/bin:$PATH" >> ~/.bashrc && \
     echo "export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH" >> ~/.bashrc
