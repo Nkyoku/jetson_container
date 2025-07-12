@@ -11,29 +11,6 @@ ARG GID=1000
 ENV USER=jetson
 ENV HOME=/home/$USER
 
-# Delete existing user
-# https://askubuntu.com/questions/1513927/ubuntu-24-04-docker-images-now-includes-user-ubuntu-with-uid-gid-1000
-RUN if getent passwd $UID; then \
-      userdel -f $(getent passwd $UID | cut -d: -f1); \
-    fi \
-    && if getent group $GID; then \
-      groupdel $(getent group $GID | cut -d: -f1); \
-    fi
-
-# Create user
-RUN useradd -m $USER && \
-    echo "$USER:$USER" | chpasswd && \
-    usermod --shell /bin/bash $USER && \
-    usermod -aG sudo $USER && \
-    echo "$USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER && \
-    chmod 0440 /etc/sudoers.d/$USER && \
-    usermod --uid $UID $USER && \
-    groupmod --gid $GID $USER
-RUN usermod -aG video $USER
-USER $USER
-WORKDIR $HOME
-SHELL ["/bin/bash", "-l", "-c"]
-
 RUN apt update && \
     apt install -qq -y --no-install-recommends \
         bash-completion \
@@ -116,15 +93,11 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install libyaml-cpp.so.0.7 for DeepStream
-RUN cd ~ && \
-    git clone --single-branch --depth 1 -b yaml-cpp-0.7.0 https://github.com/jbeder/yaml-cpp.git && \
-    mkdir -p yaml-cpp/build && \
-    cd yaml-cpp/build && \
-    cmake -DYAML_BUILD_SHARED_LIBS=ON -DYAML_CPP_BUILD_TESTS=OFF .. && \
-    make && \
-    cp libyaml-cpp.so.0.7 libyaml-cpp.so.0.7.0 /usr/local/lib/ && \
-    cd ~ && \
-    rm -rf yaml-cpp && \
+RUN git clone --single-branch --depth 1 -b yaml-cpp-0.7.0 https://github.com/jbeder/yaml-cpp.git /tmp/yaml-cpp && \
+    cmake -S /tmp/yaml-cpp -B /tmp/yaml-cpp -DYAML_BUILD_SHARED_LIBS=ON -DYAML_CPP_BUILD_TESTS=OFF && \
+    make -C /tmp/yaml-cpp && \
+    cp /tmp/yaml-cpp/libyaml-cpp.so.0.7 /tmp/yaml-cpp/libyaml-cpp.so.0.7.0 /usr/local/lib/ && \
+    rm -rf /tmp/yaml-cpp && \
     ldconfig
 
 # install ROS2 Jazzy
@@ -139,6 +112,29 @@ RUN apt update && \
         && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
+
+# Delete existing user
+# https://askubuntu.com/questions/1513927/ubuntu-24-04-docker-images-now-includes-user-ubuntu-with-uid-gid-1000
+RUN if getent passwd $UID; then \
+      userdel -f $(getent passwd $UID | cut -d: -f1); \
+    fi \
+    && if getent group $GID; then \
+      groupdel $(getent group $GID | cut -d: -f1); \
+    fi
+
+# Create user
+RUN useradd -m $USER && \
+    echo "$USER:$USER" | chpasswd && \
+    usermod --shell /bin/bash $USER && \
+    usermod -aG sudo $USER && \
+    echo "$USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER && \
+    chmod 0440 /etc/sudoers.d/$USER && \
+    usermod --uid $UID $USER && \
+    groupmod --gid $GID $USER
+RUN usermod -aG video $USER
+USER $USER
+WORKDIR $HOME
+SHELL ["/bin/bash", "-l", "-c"]
 
 RUN echo "export PATH=/usr/local/cuda/bin:$PATH" >> ~/.bashrc && \
     echo "export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH" >> ~/.bashrc
