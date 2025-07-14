@@ -1,4 +1,5 @@
 # Based on https://github.com/atinfinity/l4t-ros2-docker
+#      and https://catalog.ngc.nvidia.com/orgs/nvidia/containers/l4t-jetpack
 
 FROM ros:jazzy-ros-base-noble
 
@@ -69,14 +70,14 @@ RUN wget -O /etc/apt/keyrings/jetson-ota-public.key https://gitlab.com/nvidia/co
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/jetson-ota-public.key] https://repo.download.nvidia.com/jetson/t234 r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/jetson-ota-public.key] https://repo.download.nvidia.com/jetson/ffmpeg r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
 
-RUN --mount=type=bind,target=/proc/device-tree/compatible,source=compatible \
-    apt update && \
-    apt install -qq -y --no-install-recommends \
-        nvidia-l4t-core \
-        nvidia-l4t-cuda \
-        && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
+# Install Multimedia API
+RUN apt update && \
+    apt download nvidia-l4t-jetson-multimedia-api && \
+    dpkg-deb -R ./nvidia-l4t-jetson-multimedia-api_*_arm64.deb ./mm-api && \
+    cp -r ./mm-api/usr/src/jetson_multimedia_api /usr/src/jetson_multimedia_api && \
+    sed -i 's/sudo//' ./mm-api/DEBIAN/postinst && \
+    ./mm-api/DEBIAN/postinst && \
+    rm -rf ./nvidia-l4t-jetson-multimedia-api_*_arm64.deb ./mm-api
 
 # Install CUDA, DeepStream etc.
 RUN apt update && \
