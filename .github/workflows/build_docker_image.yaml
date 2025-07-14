@@ -25,3 +25,5 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ghcr.io/nkyoku/jetson_container:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
