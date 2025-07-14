@@ -69,6 +69,14 @@ RUN wget -O /etc/apt/keyrings/jetson-ota-public.key https://gitlab.com/nvidia/co
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/jetson-ota-public.key] https://repo.download.nvidia.com/jetson/t234 r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/jetson-ota-public.key] https://repo.download.nvidia.com/jetson/ffmpeg r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
 
+RUN apt update && \
+    apt install -qq -y --no-install-recommends \
+        nvidia-l4t-core \
+        nvidia-l4t-cuda \
+        && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Install CUDA, DeepStream etc.
 RUN apt update && \
     apt install -qq -y --no-install-recommends \
