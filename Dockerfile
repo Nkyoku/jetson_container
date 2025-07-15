@@ -90,13 +90,14 @@ RUN apt update && \
         deepstream-7.1 \
         tensorrt \
         tensorrt-dev \
+        vpi3-dev \
         && \
     apt clean && \
     ln -s /usr/lib/aarch64-linux-gnu/nvidia /usr/lib/aarch64-linux-gnu/tegra && \
     rm -rf /var/lib/apt/lists/*
 
 ENV PATH=/usr/local/cuda/bin:$PATH
-ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 
 # Install libyaml-cpp.so.0.7 for DeepStream
 RUN git clone --single-branch --depth 1 -b yaml-cpp-0.7.0 https://github.com/jbeder/yaml-cpp.git /tmp/yaml-cpp && \
@@ -122,8 +123,8 @@ RUN apt update && \
 # https://askubuntu.com/questions/1513927/ubuntu-24-04-docker-images-now-includes-user-ubuntu-with-uid-gid-1000
 RUN if getent passwd $UID; then \
       userdel -f $(getent passwd $UID | cut -d: -f1); \
-    fi \
-    && if getent group $GID; then \
+    fi && \
+    if getent group $GID; then \
       groupdel $(getent group $GID | cut -d: -f1); \
     fi
 
