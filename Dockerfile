@@ -125,7 +125,7 @@ RUN apt update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Ansible
-RUN wget -O /etc/apt/keyrings/ansible.asc https://keyserver.ubuntu.com/pks/lookup?fingerprint=on&op=get&search=0x6125E2A8C77F2818FB7BD15B93C4A3FD7BB9C367 && \
+RUN wget -O /etc/apt/keyrings/ansible.asc "https://keyserver.ubuntu.com/pks/lookup?fingerprint=on&op=get&search=0x6125E2A8C77F2818FB7BD15B93C4A3FD7BB9C367" && \
     echo "deb [signed-by=/etc/apt/keyrings/ansible.asc] https://ppa.launchpadcontent.net/ansible/ansible/ubuntu noble main" >> /etc/apt/sources.list.d/ansible.list && \
     apt update && \
     apt install -qq -y --no-install-recommends ansible && \
