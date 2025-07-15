@@ -32,16 +32,19 @@ RUN apt update && \
         libgstreamer-plugins-base1.0-dev \
         libgstrtspserver-1.0-0 \
         libjansson4 \
+        libopencv-dev \
         libssl3 \
         libssl-dev \
         libvulkan1 \
         mesa-utils \
         python3 \
         python3-pip \
+        python3-venv \
         sudo \
         vulkan-tools \
         wget \
         && \
+    apt-mark hold libopencv-dev && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -116,7 +119,16 @@ RUN apt update && \
         iproute2 \
         iputils-ping \
         nano \
+        python3-colcon-clean \
         && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Ansible
+RUN wget -O /etc/apt/keyrings/ansible.asc https://keyserver.ubuntu.com/pks/lookup?fingerprint=on&op=get&search=0x6125E2A8C77F2818FB7BD15B93C4A3FD7BB9C367 && \
+    echo "deb [signed-by=/etc/apt/keyrings/ansible.asc] https://ppa.launchpadcontent.net/ansible/ansible/ubuntu noble main" >> /etc/apt/sources.list.d/ansible.list && \
+    apt update && \
+    apt install -qq -y --no-install-recommends ansible && \
     apt clean && \
     rm -rf /var/lib/apt/lists/*
 
