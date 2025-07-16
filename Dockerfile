@@ -18,6 +18,7 @@ RUN apt update && \
         cmake \
         freeglut3-dev \
         git \
+        git-lfs \
         gstreamer1.0-libav \
         gstreamer1.0-plugins-bad \
         gstreamer1.0-plugins-base \
@@ -40,6 +41,7 @@ RUN apt update && \
         python3 \
         python3-pip \
         python3-venv \
+        ros-dev-tools \
         sudo \
         vulkan-tools \
         wget \
@@ -118,6 +120,7 @@ RUN apt update && \
         command-not-found \
         iproute2 \
         iputils-ping \
+        kmod \
         nano \
         python3-colcon-clean \
         && \
