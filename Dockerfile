@@ -80,14 +80,38 @@ RUN apt update && \
     ./mm-api/DEBIAN/postinst && \
     rm -rf ./nvidia-l4t-jetson-multimedia-api_*_arm64.deb ./mm-api
 
-# Install fake packages to avoid Python version conflict
-RUN --mount=type=bind,target=/tmp/python3-libnvinfer-dev.deb,source=./python3-libnvinfer-dev_10.3.0.30-1+cuda12.5_all.deb \
-    apt install /tmp/python3-libnvinfer-dev.deb
+# Install libyaml-cpp.so.0.7 for DeepStream
+RUN git clone --single-branch --depth 1 -b yaml-cpp-0.7.0 https://github.com/jbeder/yaml-cpp.git /tmp/yaml-cpp && \
+    cmake -S /tmp/yaml-cpp -B /tmp/yaml-cpp/build -DYAML_BUILD_SHARED_LIBS=ON -DYAML_CPP_BUILD_TESTS=OFF && \
+    make -C /tmp/yaml-cpp/build && \
+    cp -a /tmp/yaml-cpp/build/libyaml-cpp.so.0.7* /usr/local/lib/ && \
+    rm -rf /tmp/yaml-cpp && \
+    ldconfig
 
-# Install CUDA, DeepStream etc.
+# Install fake packages to avoid Python version conflict
+RUN mkdir -p /tmp/python3-libnvinfer-dev/DEBIAN && \
+    echo "Package: python3-libnvinfer-dev\n\
+Version: 10.3.0.30-1+cuda12.5\n\
+Architecture: all\n\
+Maintainer: John Doe\n\
+Section: unknown\n\
+Priority: optional\n\
+Description: Dummy package" > /tmp/python3-libnvinfer-dev/DEBIAN/control && \
+    dpkg-deb --build /tmp/python3-libnvinfer-dev && \
+    apt install /tmp/python3-libnvinfer-dev.deb && \
+    rm -rf /tmp/python3-libnvinfer-dev /tmp/python3-libnvinfer-dev.deb
+
+# Install CUDA
+RUN apt update && \
+    apt install -qq -y --no-install-recommends cuda && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+ENV PATH=/usr/local/cuda/bin:$PATH
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64
+
+# Install DeepStream etc.
 RUN apt update && \
     apt install -qq -y --no-install-recommends \
-        cuda \
         deepstream-7.1 \
         tensorrt \
         tensorrt-dev \
@@ -96,14 +120,3 @@ RUN apt update && \
     apt clean && \
     ln -s /usr/lib/aarch64-linux-gnu/nvidia /usr/lib/aarch64-linux-gnu/tegra && \
     rm -rf /var/lib/apt/lists/*
-
-ENV PATH=/usr/local/cuda/bin:$PATH
-ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
-
-# Install libyaml-cpp.so.0.7 for DeepStream
-RUN git clone --single-branch --depth 1 -b yaml-cpp-0.7.0 https://github.com/jbeder/yaml-cpp.git /tmp/yaml-cpp && \
-    cmake -S /tmp/yaml-cpp -B /tmp/yaml-cpp/build -DYAML_BUILD_SHARED_LIBS=ON -DYAML_CPP_BUILD_TESTS=OFF && \
-    make -C /tmp/yaml-cpp/build && \
-    cp -a /tmp/yaml-cpp/build/libyaml-cpp.so.0.7* /usr/local/lib/ && \
-    rm -rf /tmp/yaml-cpp && \
-    ldconfig

@@ -1,7 +1,0 @@
-Package: python3-libnvinfer-dev
-Version: 10.3.0.30-1+cuda12.5
-Architecture: all
-Maintainer: John Doe
-Section: unknown
-Priority: optional
-Description: Dummy package
