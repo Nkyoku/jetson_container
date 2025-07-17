@@ -81,7 +81,7 @@ RUN apt update && \
     rm -rf ./nvidia-l4t-jetson-multimedia-api_*_arm64.deb ./mm-api
 
 # Install fake packages to avoid Python version conflict
-RUN --mount=type=bind,target=/tmp/python3-libnvinfer-dev.deb,source=python3-libnvinfer-dev_10.3.0.30-1+cuda12.5_all.deb \
+RUN --mount=type=bind,target=/tmp/python3-libnvinfer-dev.deb,source=./python3-libnvinfer-dev_10.3.0.30-1+cuda12.5_all.deb \
     apt install /tmp/python3-libnvinfer-dev.deb
 
 # Install CUDA, DeepStream etc.

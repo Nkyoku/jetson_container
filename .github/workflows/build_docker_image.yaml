@@ -16,10 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build fake python3-libnvinfer-dev
-        run: |
-          sudo apt update
-          sudo apt install -y --no-install-recommends fakeroot
-          fakeroot dpkg-deb --build pkg/python3-libnvinfer-dev .
+        run: fakeroot dpkg-deb --build pkg/python3-libnvinfer-dev .
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
