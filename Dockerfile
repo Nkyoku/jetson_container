@@ -4,11 +4,7 @@
 FROM ros:jazzy-ros-base-noble
 
 ARG DEBIAN_FRONTEND=noninteractive
-ARG UID=1000
-ARG GID=1000
 
-ENV USER=jetson
-ENV HOME=/home/$USER
 ENV NVIDIA_DRIVER_CAPABILITIES=all
 ENV NVIDIA_VISIBLE_DEVICES=all
 
@@ -75,7 +71,7 @@ RUN wget -O /etc/apt/keyrings/jetson-ota-public.key https://gitlab.com/nvidia/co
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/jetson-ota-public.key] https://repo.download.nvidia.com/jetson/t234 r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/jetson-ota-public.key] https://repo.download.nvidia.com/jetson/ffmpeg r36.4 main" >> /etc/apt/sources.list.d/nvidia-l4t-apt-source.list
 
-# Install Multimedia API
+# Install Jetson Multimedia API
 RUN apt update && \
     apt download nvidia-l4t-jetson-multimedia-api && \
     dpkg-deb -R ./nvidia-l4t-jetson-multimedia-api_*_arm64.deb ./mm-api && \
@@ -85,7 +81,7 @@ RUN apt update && \
     rm -rf ./nvidia-l4t-jetson-multimedia-api_*_arm64.deb ./mm-api
 
 # Install fake packages to avoid Python version conflict
-RUN --mount=type=bind,target=/tmp/python3-libnvinfer-dev.deb,source=pkg/python3-libnvinfer-dev_10.3.0.30-1+cuda12.5_all.deb \
+RUN --mount=type=bind,target=/tmp/python3-libnvinfer-dev.deb,source=python3-libnvinfer-dev_10.3.0.30-1+cuda12.5_all.deb \
     apt install /tmp/python3-libnvinfer-dev.deb
 
 # Install CUDA, DeepStream etc.
@@ -106,52 +102,8 @@ ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 
 # Install libyaml-cpp.so.0.7 for DeepStream
 RUN git clone --single-branch --depth 1 -b yaml-cpp-0.7.0 https://github.com/jbeder/yaml-cpp.git /tmp/yaml-cpp && \
-    cmake -S /tmp/yaml-cpp -B /tmp/yaml-cpp -DYAML_BUILD_SHARED_LIBS=ON -DYAML_CPP_BUILD_TESTS=OFF && \
-    make -C /tmp/yaml-cpp && \
-    cp -a /tmp/yaml-cpp/libyaml-cpp.so.0.7* /usr/local/lib/ && \
+    cmake -S /tmp/yaml-cpp -B /tmp/yaml-cpp/build -DYAML_BUILD_SHARED_LIBS=ON -DYAML_CPP_BUILD_TESTS=OFF && \
+    make -C /tmp/yaml-cpp/build && \
+    cp -a /tmp/yaml-cpp/build/libyaml-cpp.so.0.7* /usr/local/lib/ && \
     rm -rf /tmp/yaml-cpp && \
     ldconfig
-
-# Install utilities
-RUN apt update && \
-    apt install -qq -y --no-install-recommends \
-        bash-completion \
-        bc \
-        command-not-found \
-        iproute2 \
-        iputils-ping \
-        kmod \
-        nano \
-        python3-colcon-clean \
-        && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install Ansible
-RUN wget -O /etc/apt/keyrings/ansible.asc "https://keyserver.ubuntu.com/pks/lookup?fingerprint=on&op=get&search=0x6125E2A8C77F2818FB7BD15B93C4A3FD7BB9C367" && \
-    echo "deb [signed-by=/etc/apt/keyrings/ansible.asc] https://ppa.launchpadcontent.net/ansible/ansible/ubuntu noble main" >> /etc/apt/sources.list.d/ansible.list && \
-    apt update && \
-    apt install -qq -y --no-install-recommends ansible && \
-    apt clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# https://askubuntu.com/questions/1513927/ubuntu-24-04-docker-images-now-includes-user-ubuntu-with-uid-gid-1000
-RUN if getent passwd $UID; then \
-      userdel -f $(getent passwd $UID | cut -d: -f1); \
-    fi && \
-    if getent group $GID; then \
-      groupdel $(getent group $GID | cut -d: -f1); \
-    fi
-
-# Create user
-RUN useradd -m $USER && \
-    echo "$USER:$USER" | chpasswd && \
-    usermod --shell /bin/bash $USER && \
-    usermod -aG sudo $USER && \
-    usermod -aG video $USER && \
-    echo "$USER ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER && \
-    chmod 0440 /etc/sudoers.d/$USER && \
-    usermod --uid $UID $USER && \
-    groupmod --gid $GID $USER
-USER $USER
-WORKDIR $HOME
