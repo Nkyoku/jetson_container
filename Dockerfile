@@ -22,6 +22,7 @@ RUN apt update && \
         gstreamer1.0-plugins-ugly \
         gstreamer1.0-tools \
         gstreamer1.0-x \
+        kmod \
         libgles2 \
         libglu1-mesa-dev \
         libglvnd-dev \
@@ -34,10 +35,10 @@ RUN apt update && \
         libssl-dev \
         libvulkan1 \
         mesa-utils \
+        openssh-client \
         python3 \
         python3-pip \
         python3-venv \
-        ros-dev-tools \
         sudo \
         vulkan-tools \
         wget \
@@ -88,7 +89,7 @@ RUN git clone --single-branch --depth 1 -b yaml-cpp-0.7.0 https://github.com/jbe
     rm -rf /tmp/yaml-cpp && \
     ldconfig
 
-# Install fake packages to avoid Python version conflict
+# Install fake packages to meet dependencies
 RUN mkdir -p /tmp/python3-libnvinfer-dev/DEBIAN && \
     echo "Package: python3-libnvinfer-dev\n\
 Version: 10.3.0.30-1+cuda12.5\n\
@@ -96,7 +97,7 @@ Architecture: all\n\
 Maintainer: John Doe\n\
 Section: unknown\n\
 Priority: optional\n\
-Description: Dummy package" > /tmp/python3-libnvinfer-dev/DEBIAN/control && \
+Description: Fake package" > /tmp/python3-libnvinfer-dev/DEBIAN/control && \
     dpkg-deb --build /tmp/python3-libnvinfer-dev && \
     apt install /tmp/python3-libnvinfer-dev.deb && \
     rm -rf /tmp/python3-libnvinfer-dev /tmp/python3-libnvinfer-dev.deb
