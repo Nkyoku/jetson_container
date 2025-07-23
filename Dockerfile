@@ -121,3 +121,11 @@ RUN apt update && \
     apt clean && \
     ln -s /usr/lib/aarch64-linux-gnu/nvidia /usr/lib/aarch64-linux-gnu/tegra && \
     rm -rf /var/lib/apt/lists/*
+
+# Install ffmpeg
+RUN apt update && \
+    apt install -qq -y --no-install-recommends \
+        ffmpeg \
+        && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
